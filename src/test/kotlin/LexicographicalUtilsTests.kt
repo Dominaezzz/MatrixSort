@@ -20,6 +20,19 @@ class LexicographicalUtilsTests {
 
 	@Test
 	fun testIncrement() {
+		assertEquals(
+			listOf("", "A", "AA", "AB", "B", "BA", "BB"),
+			allCombinations('A'..'B', 2).toList()
+		)
+
+		assertEquals(
+			listOf(
+				"",
+				"A", "AA", "AAA", "AAB", "AAC", "AB", "ABA", "ABB", "ABC", "AC", "ACA", "ACB", "ACC",
+				"B", "BA", "BAA", "BAB", "BAC", "BB", "BBA", "BBB", "BBC", "BC", "BCA", "BCB", "BCC",
+				"C", "CA", "CAA", "CAB", "CAC", "CB", "CBA", "CBB", "CBC", "CC", "CCA", "CCB", "CCC"),
+			allCombinations('A'..'C', 3).toList()
+		)
 	}
 
 	@Test
