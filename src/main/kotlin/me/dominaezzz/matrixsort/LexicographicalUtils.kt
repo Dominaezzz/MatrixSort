@@ -123,7 +123,7 @@ object LexicographicalUtils {
 		return totalIterations
 	}
 
-	fun iterateFromFirst(iterations: Int, alphabet: CharRange, limit: Int): String? {
+	fun iterateFromFirst(iterations: Long, alphabet: CharRange, limit: Int): String? {
 		require(iterations >= 0)
 		require(limit > 0)
 
@@ -148,8 +148,21 @@ object LexicographicalUtils {
 		return builder.toString()
 	}
 
-	// Doesn't work
 	fun iterateFrom(value: String, iterations: Int, alphabet: CharRange, limit: Int): String? {
+		require(value.length <= limit)
+		require(iterations >= 0)
+
+		if (iterations == 0) {
+			return value
+		}
+
+		val valueIters = iterationsFromFirst(value, alphabet, limit)
+		val newIters = valueIters + iterations
+		return iterateFromFirst(newIters, alphabet, limit)
+	}
+
+	// Doesn't work
+	fun _not_working_iterateFrom(value: String, iterations: Int, alphabet: CharRange, limit: Int): String? {
 		require(value.length <= limit)
 		require(iterations >= 0)
 
@@ -191,7 +204,7 @@ object LexicographicalUtils {
 
 		if (value.length < limit) {
 			val wrapIterations = geometricSum(base = alphabetWidth, n = limit - value.length + 1)
-			val actualIterations = (iterations % wrapIterations).toInt()
+			val actualIterations = iterations % wrapIterations
 			val result = iterateFromFirst(actualIterations, alphabet, limit - value.length)
 			if (result != null) {
 				builder.append(result)

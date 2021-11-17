@@ -67,7 +67,7 @@ class LexicographicalUtilsTests {
 		LexicographicalUtils.iterateFromFirst(11, alphabet, limit)
 
 		for (i in 0 until 300) {
-			val nextValue = LexicographicalUtils.iterateFromFirst(i, alphabet, limit)
+			val nextValue = LexicographicalUtils.iterateFromFirst(i.toLong(), alphabet, limit)
 			println("$i = $nextValue")
 		}
 	}
