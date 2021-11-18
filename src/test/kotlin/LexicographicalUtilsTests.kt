@@ -77,12 +77,14 @@ class LexicographicalUtilsTests {
 		val alphabet = 'A'..'C'
 		val limit = 4
 
-		LexicographicalUtils.iterateFrom("AAAA", 1, alphabet, limit)
+		// LexicographicalUtils.iterateFrom("AAAA", 1, alphabet, limit)
 
 		val start = "AAAA"
-		for (i in 0 until 30) {
+		var temp: String? = start
+		for (i in 0L until 30) {
 			val nextValue = LexicographicalUtils.iterateFrom(start, i, alphabet, limit)
-			println("$start + $i = $nextValue")
+			println("$start + $i = $nextValue, correct=${nextValue == temp}")
+			temp = temp?.increment(alphabet, limit)
 		}
 	}
 }

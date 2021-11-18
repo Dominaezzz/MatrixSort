@@ -148,17 +148,75 @@ object LexicographicalUtils {
 		return builder.toString()
 	}
 
-	fun iterateFrom(value: String, iterations: Int, alphabet: CharRange, limit: Int): String? {
+	private fun iterateFromSimple(value: String, iterations: Long, alphabet: CharRange, limit: Int): String? {
 		require(value.length <= limit)
 		require(iterations >= 0)
 
-		if (iterations == 0) {
-			return value
-		}
+		if (iterations == 0L) return value
 
 		val valueIters = iterationsFromFirst(value, alphabet, limit)
 		val newIters = valueIters + iterations
 		return iterateFromFirst(newIters, alphabet, limit)
+	}
+
+	fun iterateFrom(value: String, iterations: Long, alphabet: CharRange, limit: Int): String? {
+		require(value.length <= limit)
+		require(iterations >= 0)
+
+		if (iterations == 0L) return value
+
+		val alphabetWidth = alphabet.width()
+
+		var requiredIterations = iterations
+		for (index in value.indices.reversed()) {
+			// Number of iterations it would take to increment this index.
+			val nonWrapIters = geometricSum(alphabetWidth, limit - index)
+
+			// If this index is unaffected then simply append.
+			if (requiredIterations < nonWrapIters) {
+				val prefix = value.substring(startIndex = 0, endIndex = index + 1)
+				val postfix = iterateFromFirst(requiredIterations, alphabet, limit - prefix.length)
+				return prefix + postfix
+			}
+
+			// Delete the last character and convert it to iterations we need to make.
+			val c = value[index]
+			requiredIterations += (c - alphabet.first) * nonWrapIters + 1
+
+			// TODO: Shrink the limit
+		}
+
+		return null
+	}
+
+	private fun iterateFrom(value: CharSequence, iterations: Long, alphabet: CharRange, limit: Int): String? {
+		require(value.length <= limit)
+		require(iterations >= 0)
+
+		if (iterations == 0L) return value.toString()
+
+		val alphabetWidth = alphabet.width()
+
+		// Number of iterations it would take to increment this index.
+		val iterationToIncr = geometricSum(alphabetWidth, limit - value.lastIndex)
+
+		// If this index is unaffected then simply append.
+		if (iterations < iterationToIncr) {
+			val postfix = iterateFromFirst(iterations, alphabet, limit - value.length)
+			return buildString { append(value); append(postfix) }
+		}
+
+		if (value.isEmpty()) {
+			return null
+		}
+
+		// Delete the last character and convert it to iterations we need to make.
+		val c = value.last()
+		val requiredIterations = iterations + (c - alphabet.first) * iterationToIncr + 1
+
+		// TODO: Try to shrink the limit
+
+		return iterateFrom(value.dropLast(1), requiredIterations, alphabet, limit)
 	}
 
 	// Doesn't work
