@@ -1,5 +1,6 @@
 package me.dominaezzz.matrixsort
 
+import kotlin.math.log
 import kotlin.math.min
 
 object LexicographicalUtils {
@@ -159,7 +160,7 @@ object LexicographicalUtils {
 		return iterateFromFirst(newIters, alphabet, limit)
 	}
 
-	fun iterateFrom(value: String, iterations: Long, alphabet: CharRange, limit: Int): String? {
+	private fun iterateFromTake2(value: String, iterations: Long, alphabet: CharRange, limit: Int): String? {
 		require(value.length <= limit)
 		require(iterations >= 0)
 
@@ -187,6 +188,125 @@ object LexicographicalUtils {
 		}
 
 		return null
+	}
+
+	fun iterateFrom(value: String, iterations: Long, alphabet: CharRange, limit: Int): String? {
+		require(value.length <= limit)
+		require(iterations >= 0)
+
+		val alphabetWidth = alphabet.width()
+
+		val builder = StringBuilder(limit).apply { append(value) }
+		var remainingIterations = iterations
+
+		// Number of iterations it would take to increment the last character.
+		val minIters = geometricSum(alphabetWidth, limit - value.lastIndex)
+		if (remainingIterations >= minIters) {
+			// Begin overflowing as many least significant characters as we can using the remaining iterations.
+
+			// Bootstrap: Remove a single increment, so we can pretend an invisible lsc overflowed.
+			remainingIterations -= minIters
+
+			while (true) {
+				// Number of iterations it would take to increment the last character.
+				val incIters = geometricSum(alphabetWidth, limit - builder.lastIndex)
+
+				// Get last (or least significant) char.
+				val lastChar = builder.last()
+
+				// Number of iterations it would take to overflow the last character.
+				// Note that we're assuming the previous character overflowed, given us an extra increment.
+				val overflowIters = (alphabet.last - lastChar) * incIters
+
+				// Remove the last character. We're either going to increment it or overflow it.
+				builder.deleteAt(builder.lastIndex)
+
+				if (overflowIters <= remainingIterations) {
+					// Consume enough iterations to overflow the last character.
+					remainingIterations -= overflowIters
+
+					// If there are no more characters, it means we've overflowed the character space.
+					if (builder.isEmpty()) return null
+				} else {
+					// Overflow + consumed iterations
+					val increment = 1 + (remainingIterations / incIters).toInt()
+					builder.append(lastChar + increment)
+
+					// Consume all iterations that increment this character.
+					remainingIterations %= incIters
+
+					// No more overflow
+					break
+				}
+			}
+		}
+
+		if (remainingIterations > 0) {
+			val postfix = iterateFromFirst(remainingIterations, alphabet, limit - builder.length) ?: return null
+			builder.append(postfix)
+		}
+		return builder.toString()
+	}
+
+	fun iterateFromPerfect(value: String, iterations: Long, alphabet: CharRange, limit: Int): String? {
+		require(value.length <= limit)
+		require(iterations >= 0)
+
+		val alphabetWidth = alphabet.width()
+
+		val builder = StringBuilder(limit).apply { append(value) }
+		var remainingIterations = iterations
+
+		// Number of iterations it would take to increment the last character.
+		val minIters = geometricSum(alphabetWidth, limit - value.lastIndex)
+		if (remainingIterations >= minIters) {
+			// Begin overflowing as many least significant characters as we can using the remaining iterations.
+
+			// Bootstrap: Remove a single increment, so we can pretend an invisible lsc overflowed.
+			remainingIterations -= minIters
+
+			while (true) {
+				// Get last (or least significant) char.
+				val lastChar = builder.last()
+				val gapToOverflow = alphabet.last - lastChar
+
+				val n = log(1 - ((remainingIterations * (1 - alphabetWidth)).toDouble() / gapToOverflow), alphabetWidth.toDouble())
+
+				// Number of iterations it would take to increment the last character.
+				val incIters = geometricSum(alphabetWidth, limit - builder.lastIndex)
+
+				// Number of iterations it would take to overflow the last character.
+				// Note that we're assuming the previous character overflowed, given us an extra increment.
+				val overflowIters = gapToOverflow * incIters
+
+				// Remove the last character. We're either going to increment it or overflow it.
+				builder.deleteAt(builder.lastIndex)
+
+				if (overflowIters <= remainingIterations) {
+					// Consume enough iterations to overflow the last character.
+					remainingIterations -= overflowIters
+
+					// If there are no more characters, it means we've overflowed the character space.
+					if (builder.isEmpty()) return null
+				} else {
+					// Overflow + consumed iterations
+					val increment = 1 + (remainingIterations / incIters).toInt()
+					builder.append(lastChar + increment)
+
+					// Consume all iterations that increment this character.
+					remainingIterations %= incIters
+
+					// No more overflow
+					break
+				}
+			}
+		}
+
+		if (remainingIterations > 0) {
+			val postfix = iterateFromFirst(remainingIterations, alphabet, limit - builder.length) ?: return null
+			builder.append(postfix)
+		}
+		return builder.toString()
 	}
 
 	private fun iterateFrom(value: CharSequence, iterations: Long, alphabet: CharRange, limit: Int): String? {
